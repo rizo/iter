@@ -1,0 +1,746 @@
+
+type 'a iter = Iter : 's * ('s -> ('a * 's) option) -> 'a iter
+
+module type Iterator = sig
+  type 'a t = 'a iter
+
+  val append  : 'a t -> 'a -> 'a t
+  val prepend : 'a t -> 'a -> 'a t
+  val all : ('a -> bool) -> 'a t -> bool
+  val any : ('a -> bool) -> 'a t -> bool
+  val concat : 'a t -> 'a t -> 'a t
+
+  val chain : 'a t list -> 'a t
+  (** [chain list] akes a list of [t] and creates an iterator over all items in
+      sequence. *)
+
+  val chunks : 'a t -> int -> 'a t t
+  val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+
+  val compress : 'a t -> bool t -> 'a t
+  (** [compress iterable selector] excludes the elements form [iterable] for
+      which the corresponding selector index is [false]. *)
+
+  val contains : 'a t -> 'a -> bool
+  val count : unit -> int t
+  val cycle : 'a t -> 'a t
+  val dedup : ?by: ('a -> 'a -> bool) -> 'a t -> 'a t
+  val drop : int -> 'a t -> 'a t
+  val drop_while : ('a -> bool) -> 'a t -> 'a t
+  val each : ('a -> unit) -> 'a t -> unit
+  val empty : 'a t
+  val ends_with : 'a t -> 'a t -> bool
+  val enumerate : ?from: int -> 'a t -> (int * 'a) t
+  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+  val filter   : ('a -> bool) -> 'a t -> 'a t
+
+  val filter_map : ('a -> 'b option) -> 'a t -> 'b t
+
+  val find : ('a -> bool) -> 'a t -> 'a option
+  (** [find p iter] returns the first leftmost element from [iter] matching the
+      predicate [p], or [None] if there is no such element. *)
+
+
+  val find_index : ('a -> bool) -> 'a t ->  int option
+  (** [find p iter] returns the index of the first leftmost element from [itr]
+      matching the predicate [p], or [None] if there is no such element. *)
+
+  val find_indices : ('a -> bool) -> 'a t -> int t
+  (** [find_indices p iter] returns indices of all the elements from [iter]
+      matching the predicate [p]. *)
+
+  val flat_map : ('a -> 'b t) -> 'a t -> 'b t
+  val flatten : 'a t t -> 'a t
+  val fold : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
+  val fold_while : ('r -> 'a -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> 'a t -> 'r
+  val fold_right : ('a -> 'r -> 'r) -> 'a t -> 'r -> 'r
+
+  val group : 'a t -> 'a list t
+  (** [group iter] groups consecutive elements from [iter] that are equal. *)
+
+  val group_by : ('a -> 'a -> bool) -> 'a t -> 'a list t
+  (** [group_by f iter] groups consecutive elements from [iter] that are equal
+      according to the [f] discriminator. *)
+
+  val group_on : ('a -> 'b) -> 'a t -> 'a list t
+  (** [group_on f iter] groups consecutive elements from [iter] that are equal
+      after applying [f].
+
+      Equivalent to [group_by (fun a b -> f a = f b) iter] *)
+
+  val head : 'a t -> 'a option
+  val index : 'a -> 'a t -> int option
+  val indices: 'a -> 'a t -> int t
+  val init : int -> (int -> 'a) -> 'a t
+  val intersparse : 'a t -> 'a -> 'a t
+  val is_empty : 'a t -> bool
+  val iterate : ('a -> 'a) -> 'a -> 'a t
+  val join : string -> string t -> string
+  val merge : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c t
+  val last : 'a t -> 'a option
+  val take_last : int -> 'a t -> 'a t
+  val len : 'a t -> int
+  val map : ('a -> 'b) -> 'a t -> 'b t
+  val max : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+  val min : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+  val nth : 'a t -> int -> 'a option
+  val pairwise : 'a t -> ('a * 'a) t
+  val partition : ('a -> bool) -> 'a t -> 'a t * 'a t
+  val powerset : 'a t -> 'a t t
+  val product : int t -> int
+  val one : 'a -> 'a t
+  val range : ?from: int -> ?by: int -> int -> int t
+  val reduce : ('a -> 'a -> 'a) -> 'a t -> 'a option
+  val reject : ('a -> bool) -> 'a t -> 'a t
+  val repeat : 'a -> 'a t
+  val repeatedly : (unit -> 'a) -> 'a t
+
+  val remove : 'a -> 'a t -> 'a t
+  (** [remove x iter] removes the first occurrence of [x] from [iter]. *)
+
+  val remove_at : int -> 'a t -> 'a t
+  (** [remove i iter] removes the element from [iter] at index [i]. *)
+
+  val reverse : 'a t -> 'a t
+  (** [reverse iter] reverses the elements of [iter]. Only works on finite
+      iterables.
+
+      {b Complexity:} {e O(n)} *)
+
+  val scan : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
+  val scan_right : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
+  val slice : 'a t -> int -> int -> 'a t
+  val sort : 'a t -> 'a t
+  val sort_by : ('a -> 'a -> int) -> 'a t -> 'a t
+  val sort_on : ('a -> 'b) -> 'a t -> 'a t
+  val starts_with : 'a t -> 'a t -> bool
+  val split_at : int -> 'a t -> 'a t * 'a t
+  val split_while : ('a -> bool) -> 'a t -> 'a t * 'a t
+  val sum : int t -> int
+  val tail : 'a t -> 'a t
+  val take : int -> 'a t -> 'a t
+  val take_every : int -> 'a t -> 'a t
+  val take_while : ('a -> bool) -> 'a t -> 'a t
+  val to_list : 'a t -> 'a list
+  val of_list : 'a list -> 'a t
+  val unzip : ('a * 'b) t -> ('a t * 'b t)
+  val uniq : 'a t -> 'a t
+  val uniq_by : ('a -> 'a -> bool) -> 'a t -> 'a t
+  val zip : 'a t -> 'b t -> ('a * 'b) t
+  val zip_with : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
+end
+
+module Iterator : Iterator = struct
+  type 'a t = 'a iter
+
+  let empty = Iter ((), fun () -> None)
+
+  let count () =
+    Iter (0, fun i -> Some (i, i + 1))
+
+  let range ?from:(start = 0) ?by:(step = 1) n =
+    let next i =
+      if i = n then None
+      else Some (i, i + step) in
+    Iter (start, next)
+
+  let repeat x =
+    Iter ((), fun () -> Some (x, ()))
+
+  let repeatedly f =
+    Iter ((), fun () -> Some (f (), ()))
+
+  let iterate f x =
+    Iter (x, fun x -> Some (x, f x))
+
+  let one x =
+    Iter (false, function false -> Some (x, true) | true -> None)
+
+  let init n f =
+    let next i =
+      if i = n then None
+      else Some (f i, i + 1) in
+    Iter (0, next)
+
+  let append (Iter (s0, next)) a =
+    let next' (s, is_done) =
+      if is_done then None
+      else match next s with
+        | None         -> Some (a, (s, true))
+        | Some (a, s') -> Some (a, (s', is_done)) in
+    Iter ((s0, false), next')
+
+  let prepend (Iter (s0, next)) x =
+    let next' (s, opt) =
+      match opt with
+      | Some x ->
+        begin match next s with
+          | Some (a, s') -> Some (x, (s', Some a))
+          | None         -> Some (x, (s,  None))
+        end
+      | None -> None in
+    Iter ((s0, Some x), next')
+
+    let fold f z (Iter (s0, next)) =
+      let rec loop acc s =
+        match next s with
+        | None -> acc
+        | Some (a, s') -> loop (f acc a) s' in
+      loop z s0
+
+    let fold_while f z iterable         = failwith "todo"
+    let fold_right f iterable z         = failwith "todo"
+
+    let all p iterable                  = failwith "todo"
+    let any p iterable                  = failwith "todo"
+    let concat iterable1 iterable2      = failwith "todo"
+    let chain iterables                 = failwith "todo"
+    let chunks iterable size            = failwith "todo"
+    let compare cmp iterable1 iterable2 = failwith "todo"
+    let compress iterable selector      = failwith "todo"
+    let contains iterable x             = failwith "todo"
+    let cycle iterable                  = failwith "todo"
+    let dedup ?by iterable              = failwith "todo"
+    let drop n iterable                 = failwith "todo"
+    let drop_while p iterable           = failwith "todo"
+
+    let each f self =
+      fold (fun () a -> f a) () self
+
+    let ends_with target iterable       = failwith "todo"
+
+    let enumerate ?from:(start = 0) (Iter (s0, next)) =
+      let next' (s, i) =
+        match next s with
+        | Some (a, s') -> Some ((i, a), (s', i + 1))
+        | None -> None in
+      Iter ((s0, start), next')
+
+    let equal eq iterable1 iterable2    = failwith "todo"
+
+    let filter p (Iter (s0, next)) =
+      let rec next' s =
+        match next s with
+        | Some (a, s') ->
+          if p a then Some (a, s')
+          else next s'
+        | None -> None in
+      Iter (s0, next')
+
+    let filter_map p iterable           = failwith "todo"
+    let find p iterable                 = failwith "todo"
+    let find_index p iterable           = failwith "todo"
+    let find_indices p iterable         = failwith "todo"
+    let flat_map f iterable             = failwith "todo"
+    let flatten iterable                = failwith "todo"
+
+    let group iterable                  = failwith "todo"
+
+    let group_by p (Iter (s0, next)) =
+      let next' (s, g0, is_done) =
+        if is_done then None
+        else
+          let rec loop g s =
+            match g, next s with
+            | []       , Some (a, s')               -> loop [a]      s'
+            | last :: _, Some (a, s') when p last a -> loop (a :: g) s'
+            |    _ :: _, Some (a, s')               -> Some (List.rev g, (s', [a], is_done))
+            |    _ :: _, None                       -> Some (List.rev g, (s , [] , true))
+            | []       , None                       -> None in
+          loop g0 s in
+      Iter ((s0, [], false), next')
+
+    let group_on f iterable             = failwith "todo"
+
+    let head (Iter (s0, next)) =
+      match next s0 with
+      | Some (x, _) -> Some x
+      | None -> None
+
+    let index x iterable                = failwith "todo"
+    let indices x iterable              = failwith "todo"
+    let intersparse iterable x          = failwith "todo"
+
+    let is_empty (Iter (s0, next)) =
+      match next s0 with
+      | Some _ -> false
+      | None   -> true
+
+    let join sep iterable               = failwith "todo"
+    let merge f iterable1 iterable2     = failwith "todo"
+    let last iterable                   = failwith "todo"
+
+    let len self =
+      fold (fun acc _ -> acc + 1) 0 self
+
+    let map f (Iter (s0, next)) =
+      let next' s =
+        match next s with
+        | Some (a, s') -> Some (f a, s')
+        | None -> None in
+      Iter (s0, next')
+
+    let max ?by iterable                = failwith "todo"
+    let min ?by iterable                = failwith "todo"
+
+    let nth iter n =
+      fold (fun r (i, a) -> if i = n then Some a else r)
+        None (enumerate iter)
+
+    let pairwise iterable               = failwith "todo"
+    let partition p iterable            = failwith "todo"
+    let powerset iterable               = failwith "todo"
+    let product iterable                = failwith "todo"
+    let reduce f iterable               = failwith "todo"
+    let reject p iterable               = failwith "todo"
+    let remove x iterable               = failwith "todo"
+    let remove_at i iterable            = failwith "todo"
+    let reverse iterable                = failwith "todo"
+    let scan f z iterable               = failwith "todo"
+    let scan_right f z iterable         = failwith "todo"
+    let slice iterable n m              = failwith "todo"
+    let sort iterable                   = failwith "todo"
+    let sort_by f iterable              = failwith "todo"
+    let sort_on f iterable              = failwith "todo"
+    let starts_with target iterable     = failwith "todo"
+    let split_at i iterable             = failwith "todo"
+    let split_while p iterable          = failwith "todo"
+    let sum iterable                    = failwith "todo"
+
+    let tail (Iter (s0, next)) =
+      let next' (s, did_skip_head) =
+        match next s with
+        | Some (a, s1) when did_skip_head -> Some (a, (s1, did_skip_head))
+        | Some (_, s1) ->
+          begin match next s1 with
+            | Some (a, s2) -> Some (a, (s2, true))
+            | None -> None
+          end
+        | None -> None in
+      Iter ((s0, false), next')
+
+    let take n (Iter (s0, next)) =
+      let next' (s, i) =
+        if i <= 0 then None
+        else match next s with
+          | Some (a, s') -> Some (a, (s', i - 1))
+          | None -> None in
+      Iter ((s0, n), next')
+
+    let take_every n iterable           = failwith "todo"
+    let take_while p iterable           = failwith "todo"
+    let take_last n iterable            = failwith "todo"
+
+    let to_list self =
+      List.rev (fold (fun acc x -> x :: acc) [] self)
+
+    let of_list l =
+      let next = function
+        | []    -> None
+        | x::xs -> Some (x, xs) in
+      Iter (l, next)
+
+    let unzip iterable                  = failwith "todo"
+    let uniq iterable                   = failwith "todo"
+    let uniq_by f iterable              = failwith "todo"
+    let zip iterable1 iterable2         = failwith "todo"
+    let zip_with f iterable1 iterable2  = failwith "todo"
+
+end
+
+
+module Input = struct
+  module type Sig0 = sig
+    type t
+    type item
+    val iter : t -> item iter
+  end
+
+  module type Sig1 = sig
+    type 'a t
+    val iter : 'a t -> 'a iter
+  end
+
+
+  module type Ext0 = sig
+    type t
+    type item
+
+    val all          : (item -> bool) -> t -> bool
+    val any          : (item -> bool) -> t -> bool
+    val append       : t -> item -> item iter
+    val prepend      : t -> item -> item iter
+    val chain        : t list -> item iter
+    val chunks       : t -> int -> item iter iter
+    val compare      : (item -> item -> int) -> t -> t -> int
+    val contains     : t -> item -> bool
+    val cycle        : t -> item iter
+    val dedup        : ?by: (item -> item -> bool) -> t -> item iter
+    val drop         : int -> t -> item iter
+    val drop_while   : (item -> bool) -> t -> item iter
+    val each         : (item -> unit) -> t -> unit
+    val ends_with    : t -> t -> bool
+    val enumerate    : ?from: int -> t -> (int * item) iter
+    val equal        : (item -> item -> bool) -> t -> t -> bool
+    val filter       : (item -> bool) -> t -> item iter
+    val filter_map   : (item -> 'b option) -> t -> 'b iter
+    val find         : (item -> bool) -> t -> item option
+    val find_index   : (item -> bool) -> t ->  int option
+    val find_indices : (item -> bool) -> t -> int iter
+    val fold         : ('r -> item -> 'r) -> 'r -> t -> 'r
+    val fold_while   : ('r -> item -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> t -> 'r
+    val fold_right   : (item -> 'r -> 'r) -> t -> 'r -> 'r
+    val group        : t -> item list iter
+    val group_by     : (item -> item -> bool) -> t -> item list iter
+    val group_on     : (item -> 'b) -> t -> item list iter
+    val head         : t -> item option
+    val index        : item -> t -> int option
+    val indices      : item -> t -> int iter
+    val intersparse  : t -> item -> item iter
+    val is_empty     : t -> bool
+    val join         : string -> t -> string
+    val merge        : (item -> item -> 'a option) -> t -> t -> 'a iter
+    val last         : t -> item option
+    val len       : t -> int
+    val map          : (item -> 'b) -> t -> 'b iter
+    val max          : ?by:(item -> item -> int) -> t -> item option
+    val min          : ?by:(item -> item -> int) -> t -> item option
+    val nth          : t -> int -> item option
+    val pairwise     : t -> (item * item) iter
+    val partition    : (item -> bool) -> t -> item iter * item iter
+    val powerset     : t -> item iter iter
+    val product      : t -> int
+    val reduce       : (item -> item -> item) -> t -> item option
+    val reject       : (item -> bool) -> t -> item iter
+    val remove       : item -> t -> item iter
+    val remove_at    : int -> t -> item iter
+    val reverse      : t -> item iter
+    val scan         : ('r -> item -> 'r) -> 'r -> t -> 'r iter
+    val scan_right   : ('r -> item -> 'r) -> 'r -> t -> 'r iter
+    val slice        : t -> int -> int -> item iter
+    val sort         : t -> item iter
+    val sort_by      : (item -> item -> int) -> t -> item iter
+    val sort_on      : (item -> 'b) -> t -> item iter
+    val starts_with  : t -> t -> bool
+    val split_at     : int -> t -> item iter * item iter
+    val split_while  : (item -> bool) -> t -> item iter * item iter
+    val sum          : t -> int
+    val tail         : t -> item iter
+    val take         : int -> t -> item iter
+    val take_every   : int -> t -> item iter
+    val take_while   : (item -> bool) -> t -> item iter
+    val take_last    : int -> t -> item iter
+    val to_list      : t -> item list
+    val uniq         : t -> item iter
+    val uniq_by      : (item -> item -> bool) -> t -> item iter
+    val zip          : t -> t -> (item * item) iter
+    val zip_with     : (item -> item -> 'a) -> t -> t -> 'a iter
+  end
+
+  module type Ext1 = sig
+    type 'a t
+
+    val all          : ('a -> bool) -> 'a t -> bool
+    val any          : ('a -> bool) -> 'a t -> bool
+    val append       : 'a t -> 'a -> 'a iter
+    val prepend      : 'a t -> 'a -> 'a iter
+    val concat       : 'a t -> 'a t -> 'a iter
+    val chain        : 'a t list -> 'a iter
+    val chunks       : 'a t -> int -> 'a iter iter
+    val compare      : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+    val compress     : 'a t -> bool t -> 'a iter
+    val contains     : 'a t -> 'a -> bool
+    val cycle        : 'a t -> 'a iter
+    val dedup        : ?by: ('a -> 'a -> bool) -> 'a t -> 'a iter
+    val drop         : int -> 'a t -> 'a iter
+    val drop_while   : ('a -> bool) -> 'a t -> 'a iter
+    val each         : ('a -> unit) -> 'a t -> unit
+    val ends_with    : 'a t -> 'a t -> bool
+    val enumerate    : ?from: int -> 'a t -> (int * 'a) iter
+    val equal        : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+    val filter       : ('a -> bool) -> 'a t -> 'a iter
+    val filter_map   : ('a -> 'b option) -> 'a t -> 'b iter
+    val find         : ('a -> bool) -> 'a t -> 'a option
+    val find_index   : ('a -> bool) -> 'a t ->  int option
+    val find_indices : ('a -> bool) -> 'a t -> int iter
+    val flat_map     : ('a -> 'b t) -> 'a t -> 'b iter
+    val flatten      : 'a t t -> 'a iter
+    val fold         : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
+    val fold_while   : ('r -> 'a -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> 'a t -> 'r
+    val fold_right   : ('a -> 'r -> 'r) -> 'a t -> 'r -> 'r
+    val group        : 'a t -> 'a list iter
+    val group_by     : ('a -> 'a -> bool) -> 'a t -> 'a list iter
+    val group_on     : ('a -> 'b) -> 'a t -> 'a list iter
+    val head         : 'a t -> 'a option
+    val index        : 'a -> 'a t -> int option
+    val indices      : 'a -> 'a t -> int iter
+    val intersparse  : 'a t -> 'a -> 'a iter
+    val is_empty     : 'a t -> bool
+    val join         : string -> string t -> string
+    val merge        : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c iter
+    val last         : 'a t -> 'a option
+    val len       : 'a t -> int
+    val map          : ('a -> 'b) -> 'a t -> 'b iter
+    val max          : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+    val min          : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+    val nth          : 'a t -> int -> 'a option
+    val pairwise     : 'a t -> ('a * 'a) iter
+    val partition    : ('a -> bool) -> 'a t -> 'a iter * 'a iter
+    val powerset     : 'a t -> 'a iter iter
+    val product      : int t -> int
+    val reduce       : ('a -> 'a -> 'a) -> 'a t -> 'a option
+    val reject       : ('a -> bool) -> 'a t -> 'a iter
+    val remove       : 'a -> 'a t -> 'a iter
+    val remove_at    : int -> 'a t -> 'a iter
+    val reverse      : 'a t -> 'a iter
+    val scan         : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r iter
+    val scan_right   : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r iter
+    val slice        : 'a t -> int -> int -> 'a iter
+    val sort         : 'a t -> 'a iter
+    val sort_by      : ('a -> 'a -> int) -> 'a t -> 'a iter
+    val sort_on      : ('a -> 'b) -> 'a t -> 'a iter
+    val starts_with  : 'a t -> 'a t -> bool
+    val split_at     : int -> 'a t -> 'a iter * 'a iter
+    val split_while  : ('a -> bool) -> 'a t -> 'a iter * 'a iter
+    val sum          : int t -> int
+    val tail         : 'a t -> 'a iter
+    val take         : int -> 'a t -> 'a iter
+    val take_every   : int -> 'a t -> 'a iter
+    val take_while   : ('a -> bool) -> 'a t -> 'a iter
+    val take_last    : int -> 'a t -> 'a iter
+    val to_list      : 'a t -> 'a list
+    val unzip        : ('a * 'b) t -> 'a iter * 'b iter
+    val uniq         : 'a t -> 'a iter
+    val uniq_by      : ('a -> 'a -> bool) -> 'a t -> 'a iter
+    val zip          : 'a t -> 'b t -> ('a * 'b) iter
+    val zip_with     : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c iter
+  end
+
+
+  module Make0(M : Sig0) : (Ext0 with type    t := M.t
+                                  and type item := M.item) = struct
+    open Iterator
+
+    let all p iterable                  = all p (M.iter iterable)
+    let any p iterable                  = any p (M.iter iterable)
+    let concat iterable1 iterable2      = concat (M.iter iterable1) (M.iter iterable2)
+    let append iterable x               = append (M.iter iterable) x
+    let prepend iterable x              = prepend (M.iter iterable) x
+    let chain iterables                 = chain (List.map M.iter iterables)
+    let chunks iterable size            = chunks (M.iter iterable) size
+    let compare cmp iterable1 iterable2 = compare cmp (M.iter iterable1) (M.iter iterable2)
+    let map f iterable                  = map f (M.iter iterable)
+    let contains iterable x             = contains (M.iter iterable) x
+    let cycle iterable                  = cycle (M.iter iterable)
+    let dedup ?by iterable              = dedup ?by (M.iter iterable)
+    let drop n iterable                 = drop n (M.iter iterable)
+    let drop_while p iterable           = drop_while p (M.iter iterable)
+    let each f iterable                 = each f (M.iter iterable)
+    let ends_with end_iterable iterable = ends_with (M.iter end_iterable) (M.iter iterable)
+    let enumerate ?from iterable        = enumerate ?from (M.iter iterable)
+    let equal eq iterable1 iterable2    = equal eq (M.iter iterable1) (M.iter iterable2)
+    let filter p iterable               = filter p (M.iter iterable)
+    let filter_map p iterable           = filter_map p (M.iter iterable)
+    let find p iterable                 = find p (M.iter iterable)
+    let find_index p iterable           = find_index p (M.iter iterable)
+    let find_indices p iterable         = find_indices p (M.iter iterable)
+    let flat_map f iterable             = failwith "todo"
+    let fold f z iterable               = fold f z (M.iter iterable)
+    let fold_while f z iterable         = fold_while f z (M.iter iterable)
+    let fold_right f iterable z         = fold_right f (M.iter iterable) z
+    let group iterable                  = group (M.iter iterable)
+    let group_by f iterable             = group_by f (M.iter iterable)
+    let group_on f iterable             = group_on f (M.iter iterable)
+    let head iterable                   = head (M.iter iterable)
+    let index x iterable                = index x (M.iter iterable)
+    let indices x iterable              = indices x (M.iter iterable)
+    let intersparse iterable x          = intersparse (M.iter iterable) x
+    let is_empty iterable               = is_empty (M.iter iterable)
+    let join sep iterable               = failwith "todo"
+    let merge f iterable1 iterable2     = merge f (M.iter iterable1) (M.iter iterable2)
+    let last iterable                   = last (M.iter iterable)
+    let len iterable                 = len (M.iter iterable)
+    let max ?by iterable                = max ?by (M.iter iterable)
+    let min ?by iterable                = min ?by (M.iter iterable)
+    let nth iterable n                  = nth (M.iter iterable) n
+    let pairwise iterable               = pairwise (M.iter iterable)
+    let partition p iterable            = partition p (M.iter iterable)
+    let powerset iterable               = powerset (M.iter iterable)
+    let product iterable                = failwith "todo"
+    let reduce f iterable               = reduce f (M.iter iterable)
+    let reject p iterable               = reject p (M.iter iterable)
+    let remove x iterable               = remove x (M.iter iterable)
+    let remove_at i iterable            = remove_at i (M.iter iterable)
+    let reverse iterable                = reverse (M.iter iterable)
+    let scan f z iterable               = scan f z (M.iter iterable)
+    let scan_right f z iterable         = scan_right f z (M.iter iterable)
+    let slice iterable n m              = slice (M.iter iterable) n m
+    let sort iterable                   = sort (M.iter iterable)
+    let sort_by f iterable              = sort_by f (M.iter iterable)
+    let sort_on f iterable              = sort_on f (M.iter iterable)
+    let starts_with start iterable      = starts_with (M.iter start) (M.iter iterable)
+    let split_at i iterable             = split_at i (M.iter iterable)
+    let split_while p iterable          = split_while p (M.iter iterable)
+    let sum iterable                    = failwith "todo"
+    let tail iterable                   = tail (M.iter iterable)
+    let take n iterable                 = take n (M.iter iterable)
+    let take_every n iterable           = take_every n (M.iter iterable)
+    let take_while p iterable           = take_while p (M.iter iterable)
+    let take_last n iterable            = take_last n (M.iter iterable)
+    let to_list iterable                = to_list (M.iter iterable)
+    let uniq iterable                   = uniq (M.iter iterable)
+    let uniq_by f iterable              = uniq_by f (M.iter iterable)
+    let zip iterable1 iterable2         = zip (M.iter iterable1) (M.iter iterable2)
+    let zip_with f iterable1 iterable2  = zip_with f (M.iter iterable1) (M.iter iterable2)
+
+  end
+
+
+  module Make1(M : Sig1) : (Ext1 with type 'a t := 'a M.t) = struct
+    open Iterator
+
+    let all p iterable                  = all p (M.iter iterable)
+    let any p iterable                  = any p (M.iter iterable)
+    let append iterable x               = append (M.iter iterable) x
+    let prepend iterable x              = prepend (M.iter iterable) x
+    let concat iterable1 iterable2      = concat (M.iter iterable1) (M.iter iterable2)
+    let chain iterables                 = chain (List.map M.iter iterables)
+    let chunks iterable size            = chunks (M.iter iterable) size
+    let compare cmp iterable1 iterable2 = compare cmp (M.iter iterable1) (M.iter iterable2)
+    let compress iterable selector      = compress (M.iter iterable) (M.iter selector)
+    let map f iterable                  = map f (M.iter iterable)
+    let contains iterable x             = contains (M.iter iterable) x
+    let cycle iterable                  = cycle (M.iter iterable)
+    let dedup ?by iterable              = dedup ?by (M.iter iterable)
+    let drop n iterable                 = drop n (M.iter iterable)
+    let drop_while p iterable           = drop_while p (M.iter iterable)
+    let each f iterable                 = each f (M.iter iterable)
+    let ends_with end_iterable iterable = ends_with (M.iter end_iterable) (M.iter iterable)
+    let enumerate ?from iterable        = enumerate ?from (M.iter iterable)
+    let equal eq iterable1 iterable2    = equal eq (M.iter iterable1) (M.iter iterable2)
+    let filter p iterable               = filter p (M.iter iterable)
+    let filter_map p iterable           = filter_map p (M.iter iterable)
+    let find p iterable                 = find p (M.iter iterable)
+    let find_index p iterable           = find_index p (M.iter iterable)
+    let find_indices p iterable         = find_indices p (M.iter iterable)
+    let flat_map f iterable             = failwith "todo"
+    let flatten iterable                = flatten (map M.iter iterable)
+    let fold f z iterable               = fold f z (M.iter iterable)
+    let fold_while f z iterable         = fold_while f z (M.iter iterable)
+    let fold_right f iterable z         = fold_right f (M.iter iterable) z
+    let group iterable                  = group (M.iter iterable)
+    let group_by f iterable             = group_by f (M.iter iterable)
+    let group_on f iterable             = group_on f (M.iter iterable)
+    let head iterable                   = head (M.iter iterable)
+    let index x iterable                = index x (M.iter iterable)
+    let indices x iterable              = indices x (M.iter iterable)
+    let intersparse iterable x          = intersparse (M.iter iterable) x
+    let is_empty iterable               = is_empty (M.iter iterable)
+    let join sep iterable               = join sep (M.iter iterable)
+    let merge f iterable1 iterable2     = merge f (M.iter iterable1) (M.iter iterable2)
+    let last iterable                   = last (M.iter iterable)
+    let len iterable                 = len (M.iter iterable)
+    let max ?by iterable                = max ?by (M.iter iterable)
+    let min ?by iterable                = min ?by (M.iter iterable)
+    let nth iterable n                  = nth (M.iter iterable) n
+    let pairwise iterable               = pairwise (M.iter iterable)
+    let partition p iterable            = partition p (M.iter iterable)
+    let powerset iterable               = powerset (M.iter iterable)
+    let product iterable                = product (M.iter iterable)
+    let reduce f iterable               = reduce f (M.iter iterable)
+    let reject p iterable               = reject p (M.iter iterable)
+    let remove x iterable               = remove x (M.iter iterable)
+    let remove_at i iterable            = remove_at i (M.iter iterable)
+    let reverse iterable                = reverse (M.iter iterable)
+    let scan f z iterable               = scan f z (M.iter iterable)
+    let scan_right f z iterable         = scan_right f z (M.iter iterable)
+    let slice iterable n m              = slice (M.iter iterable) n m
+    let sort iterable                   = sort (M.iter iterable)
+    let sort_by f iterable              = sort_by f (M.iter iterable)
+    let sort_on f iterable              = sort_on f (M.iter iterable)
+    let starts_with start iterable      = starts_with (M.iter start) (M.iter iterable)
+    let split_at i iterable             = split_at i (M.iter iterable)
+    let split_while p iterable          = split_while p (M.iter iterable)
+    let sum iterable                    = sum (M.iter iterable)
+    let tail iterable                   = tail (M.iter iterable)
+    let take n iterable                 = take n (M.iter iterable)
+    let take_every n iterable           = take_every n (M.iter iterable)
+    let take_while p iterable           = take_while p (M.iter iterable)
+    let take_last n iterable            = take_last n (M.iter iterable)
+    let to_list iterable                = to_list (M.iter iterable)
+    let unzip iterable                  = unzip (M.iter iterable)
+    let uniq iterable                   = uniq (M.iter iterable)
+    let uniq_by f iterable              = uniq_by f (M.iter iterable)
+    let zip iterable1 iterable2         = zip (M.iter iterable1) (M.iter iterable2)
+    let zip_with f iterable1 iterable2  = zip_with f (M.iter iterable1) (M.iter iterable2)
+  end
+
+  module type Sig = Sig1
+  module type Ext = Ext1
+
+  module Make = Make1
+end
+
+module Index = struct
+  module type Sig = sig
+    type 'a t
+
+    val len : 'a t -> int
+    val idx : 'a t -> int -> 'a
+  end
+
+  module type Ext = sig
+    type 'a t
+
+    val len : 'a t -> int
+    val get    : 'a t -> int -> 'a option
+    val last   : 'a t -> 'a option
+    val slice  : 'a t -> int -> int -> 'a iter
+
+    include Input.Sig with type 'a t := 'a t
+    include Input.Ext with type 'a t := 'a t
+  end
+
+  module Make(M : Sig) : (Ext with type 'a t := 'a M.t) = struct
+
+    let iter indexable =
+      let len = M.len indexable in
+      let next i =
+        if i >= len then None
+        else Some (M.idx indexable i, i + 1) in
+      Iter (0, next)
+
+    include Input.Make(struct
+        type 'a t = 'a M.t
+        let iter = iter
+      end)
+
+    let each f indexable =
+      let len = M.len indexable in
+      let rec loop i =
+        if i = len then ()
+        else (f (M.idx indexable i); loop (i + 1)) in
+      loop 0
+
+    let len = M.len
+
+    let get indexable i =
+      let len = M.len indexable in
+      let i = if i < 0 then len + i else i in
+      if i < 0 || i >= len then None
+      else Some (M.idx indexable i)
+
+    let last indexable =
+      let len = M.len indexable in
+      if len <= 0 then None
+      else Some (M.idx indexable (len - 1))
+
+    let slice indexable n m =
+      failwith "todo"
+  end
+end
+
+include Iterator
+
+
