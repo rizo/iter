@@ -89,7 +89,6 @@ val find : ('a -> bool) -> 'a t -> 'a option
 (** [find p iter] returns the first leftmost element from [iter] matching the
     predicate [p], or [None] if there is no such element. *)
 
-
 val find_index : ('a -> bool) -> 'a t ->  int option
 (** [find p iter] returns the index of the first leftmost element from [itr]
     matching the predicate [p], or [None] if there is no such element. *)
@@ -99,6 +98,7 @@ val find_indices : ('a -> bool) -> 'a t -> int t
     matching the predicate [p]. *)
 
 val flat_map : ('a -> 'b t) -> 'a t -> 'b t
+
 val flatten : 'a t t -> 'a t
 
 val fold : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
@@ -129,19 +129,34 @@ val group_on : ('a -> 'b) -> 'a t -> 'a list t
     Equivalent to [group_by (fun a b -> f a = f b) iter] *)
 
 val head : 'a t -> 'a option
+
 val index : 'a -> 'a t -> int option
+
 val indices: 'a -> 'a t -> int t
+
 val init : int -> (int -> 'a) -> 'a t
+
 val intersparse : 'a t -> 'a -> 'a t
+
 val is_empty : 'a t -> bool
+(** [is_empty iter] is [true] if the iterator has no elements. *)
+
 val iterate : ('a -> 'a) -> 'a -> 'a t
+
 val join : string -> string t -> string
+
 val merge : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c t
+
 val last : 'a t -> 'a option
+
 val take_last : int -> 'a t -> 'a t
+
 val len : 'a t -> int
+
 val map : ('a -> 'b) -> 'a t -> 'b t
+
 val max : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+
 val min : ?by:('a -> 'a -> int) -> 'a t -> 'a option
 
 val nth : int -> 'a t -> 'a option
@@ -209,10 +224,15 @@ val reverse : 'a t -> 'a t
     {b Complexity:} {e O(n)} *)
 
 val scan : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
+
 val scan_right : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
+
 val slice : 'a t -> int -> int -> 'a t
+
 val sort : 'a t -> 'a t
+
 val sort_by : ('a -> 'a -> int) -> 'a t -> 'a t
+
 val sort_on : ('a -> 'b) -> 'a t -> 'a t
 
 val starts_with : 'a t -> 'a t -> bool
@@ -220,6 +240,7 @@ val starts_with : 'a t -> 'a t -> bool
     the elements at the begining of [iter]. *)
 
 val split_at : int -> 'a t -> 'a t * 'a t
+
 val split_while : ('a -> bool) -> 'a t -> 'a t * 'a t
 
 val sum : int t -> int
@@ -318,7 +339,7 @@ module Input : sig
     val join         : string -> t -> string
     val merge        : (item -> item -> 'a option) -> t -> t -> 'a iter
     val last         : t -> item option
-    val len       : t -> int
+    val len          : t -> int
     val map          : (item -> 'b) -> t -> 'b iter
     val max          : ?by:(item -> item -> int) -> t -> item option
     val min          : ?by:(item -> item -> int) -> t -> item option
