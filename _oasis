@@ -1,0 +1,33 @@
+Name: iter
+Version: 0.1.0
+License: MIT
+Authors: Rizo Isrof <rizo@odis.io>
+Homepage: http://github.com/rizo/iter
+OASISFormat: 0.4
+BuildTools: camlp4o,ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+Synopsis:
+    Simple, pure and efficient iterators for OCaml.
+
+
+Library "iter"
+  Path:           src
+  CompiledObject: native
+  Modules:        Iter
+  NativeOpt:      -O3
+  Install:        true
+
+
+Executable "test_iter"
+  Path:           tests
+  MainIs:         test_iter.ml
+  BuildDepends:   iter
+  CompiledObject: byte
+  Install:        false
+
+
+SourceRepository master
+  Type:     git
+  Location: https://github.com/rizo/iter.git
+  Browser:  https://github.com/rizo/iter
+
