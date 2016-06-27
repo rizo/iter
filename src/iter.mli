@@ -1,7 +1,17 @@
-type 'a iter
+(** An interface for pure iterators with explicit state.
+
+    This module implements combinators for consuming and transforming
+    iterators. External containers can use functors provided in this module
+    to implement the iteration extensions. Three types of iterables can be
+    implemented: input iterables, index iterables and output iterables.
+    
+    Functors for both, polymorphic and monomorphic containers are included. *)
+
+type 'a iter = Iter : 's * ('s -> ('a * 's) option) -> 'a iter
 (** The type for iterators. *)
 
 type 'a t = 'a iter
+(** A local alias for [iter] type. *)
 
 val append  : 'a t -> 'a -> 'a t
 (** [append iter a] appends the item [a] at the end of [iter]. *)
