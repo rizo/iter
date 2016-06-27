@@ -110,6 +110,7 @@ val find_indices : ('a -> bool) -> 'a t -> int t
 val flat_map : ('a -> 'b t) -> 'a t -> 'b t
 
 val flatten : 'a t t -> 'a t
+(** [flatten iters] concatenates all recursive iterators in [iters] *)
 
 val fold : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
 (** [fold f init iter] reduces [iter] to a single value using [f] to combine
@@ -139,14 +140,23 @@ val group_on : ('a -> 'b) -> 'a t -> 'a list t
     Equivalent to [group_by (fun a b -> f a = f b) iter] *)
 
 val head : 'a t -> 'a option
+(** [head iter] is the first element of [iter] or [None] if [iter] is empty. *)
 
 val index : 'a -> 'a t -> int option
+(** [index x iter] returns the index of the first leftmost element from [itr]
+    that is equal to [x], or [None] if there is no such element. *)
 
 val indices: 'a -> 'a t -> int t
+(** [indices x iter] returns indices of all the elements from [iter]
+    that are equal to [x]. *)
 
 val init : int -> (int -> 'a) -> 'a t
+(** [init n f] is an iterator of length [n] for which the element at index [i]
+    is [f i]. *)
 
-val intersparse : 'a t -> 'a -> 'a t
+val intersparse : 'a -> 'a t -> 'a t
+(** [intersparse x iter] takes element [x] and iterator [iter] and `intersperses'
+    that element between the elements of the iterator. *)
 
 val is_empty : 'a t -> bool
 (** [is_empty iter] is [true] if the iterator has no elements. *)
