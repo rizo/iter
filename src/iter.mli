@@ -20,7 +20,7 @@ val prepend : 'a t -> 'a -> 'a t
 (** [prepend iter a] prepends the item [a] at the begining of [iter]. *)
 
 val all : ('a -> bool) -> 'a t -> bool
-(** [all ppred iter] is [true] if all the elements from [iter] match the
+(** [all pred iter] is [true] if all the elements from [iter] match the
     predicate [pred]. *)
 
 val any : ('a -> bool) -> 'a t -> bool
