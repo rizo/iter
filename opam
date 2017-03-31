@@ -1,0 +1,15 @@
+opam-version: "2.0"
+name: "iter"
+version: "~dev"
+synopsis: "Efficient functorized iterators for OCaml"
+maintainer: "Rizo Isrof <rizo@odis.io>"
+authors: "Rizo Isrof <rizo@odis.io>"
+license: "MIT"
+homepage: "https://github.com/rizo/iter"
+bug-reports: "https://github.com/rizo/iter/issues"
+build: [
+  ["./configure" "--prefix=%{prefix}%"]
+  [make]
+]
+install: [make "install"]
+dev-repo: "git+https://"
