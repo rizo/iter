@@ -477,6 +477,7 @@ module type Input'0 = sig
   val to_list      : t -> item list
   val uniq         : t -> item iter
   val uniq_by      : (item -> item -> bool) -> t -> item iter
+  val view         : t -> (item * item iter) option
   val zip          : t -> t -> (item * item) iter
   val zip_with     : (item -> item -> 'a) -> t -> t -> 'a iter
 end
@@ -557,6 +558,7 @@ module Input'0 = struct
     let to_list iterable                = to_list (M.iter iterable)
     let uniq iterable                   = uniq (M.iter iterable)
     let uniq_by f iterable              = uniq_by f (M.iter iterable)
+    let view iterable                   = view (M.iter iterable)
     let zip iterable1 iterable2         = zip (M.iter iterable1) (M.iter iterable2)
     let zip_with f iterable1 iterable2  = zip_with f (M.iter iterable1) (M.iter iterable2)
   end
@@ -636,6 +638,7 @@ module type Input'1 = sig
   val unzip        : ('a * 'b) t -> 'a iter * 'b iter
   val uniq         : 'a t -> 'a iter
   val uniq_by      : ('a -> 'a -> bool) -> 'a t -> 'a iter
+  val view         : 'a t -> ('a * 'a iter) option
   val zip          : 'a t -> 'b t -> ('a * 'b) iter
   val zip_with     : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c iter
 end
@@ -716,6 +719,7 @@ module Input'1 = struct
     let unzip iterable                  = unzip (M.iter iterable)
     let uniq iterable                   = uniq (M.iter iterable)
     let uniq_by f iterable              = uniq_by f (M.iter iterable)
+    let view iterable                   = view (M.iter iterable)
     let zip iterable1 iterable2         = zip (M.iter iterable1) (M.iter iterable2)
     let zip_with f iterable1 iterable2  = zip_with f (M.iter iterable1) (M.iter iterable2)
   end
