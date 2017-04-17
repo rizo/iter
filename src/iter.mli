@@ -4,7 +4,7 @@
     iterators. External containers can use functors provided in this module
     to implement the iteration extensions. Three types of iterables can be
     implemented: input iterables, index iterables and output iterables.
-    
+
     Functors for both, polymorphic and monomorphic containers are included. *)
 
 type 'a iter = Iter : 's * ('s -> ('a * 's) option) -> 'a iter
@@ -310,218 +310,214 @@ val zip_with : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 
 (* Iterables *)
 
-(* Input Iterable *)
+(* Monomorphic Input Iterables *)
 
-module Input : sig
+module type Input'0 = sig
+  type t
+  type item
 
-  (* Monomorphic Iterables *)
+  val all          : (item -> bool) -> t -> bool
+  val any          : (item -> bool) -> t -> bool
+  val chain        : t list -> item iter
+  val chunks       : int -> t -> item iter iter
+  val compare      : (item -> item -> int) -> t -> t -> int
+  val contains     : item -> t -> bool
+  val cycle        : t -> item iter
+  val dedup        : ?by: (item -> item -> bool) -> t -> item iter
+  val drop         : int -> t -> item iter
+  val drop_while   : (item -> bool) -> t -> item iter
+  val each         : (item -> unit) -> t -> unit
+  val ends_with    : t -> t -> bool
+  val enumerate    : ?from: int -> t -> (int * item) iter
+  val equal        : (item -> item -> bool) -> t -> t -> bool
+  val filter       : (item -> bool) -> t -> item iter
+  val filter_map   : (item -> 'b option) -> t -> 'b iter
+  val find         : (item -> bool) -> t -> item option
+  val find_index   : (item -> bool) -> t ->  int option
+  val find_indices : (item -> bool) -> t -> int iter
+  val fold         : ('r -> item -> 'r) -> 'r -> t -> 'r
+  val fold_while   : ('r -> item -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> t -> 'r
+  val fold_right   : (item -> 'r -> 'r) -> t -> 'r -> 'r
+  val group        : t -> item list iter
+  val group_by     : (item -> item -> bool) -> t -> item list iter
+  val group_on     : (item -> 'b) -> t -> item list iter
+  val head         : t -> item option
+  val index        : item -> t -> int option
+  val indices      : item -> t -> int iter
+  val intersparse  : t -> item -> item iter
+  val is_empty     : t -> bool
+  val join         : string -> t -> string
+  val merge        : (item -> item -> 'a option) -> t -> t -> 'a iter
+  val last         : t -> item option
+  val len          : t -> int
+  val map          : (item -> 'b) -> t -> 'b iter
+  val max          : ?by:(item -> item -> int) -> t -> item option
+  val min          : ?by:(item -> item -> int) -> t -> item option
+  val nth          : int -> t -> item option
+  val pairwise     : t -> (item * item) iter
+  val partition    : (item -> bool) -> t -> item iter * item iter
+  val powerset     : t -> item iter iter
+  val product      : t -> int
+  val reduce       : (item -> item -> item) -> t -> item option
+  val reject       : (item -> bool) -> t -> item iter
+  val reverse      : t -> item iter
+  val scan         : ('r -> item -> 'r) -> 'r -> t -> 'r iter
+  val scan_right   : ('r -> item -> 'r) -> 'r -> t -> 'r iter
+  val slice        : t -> int -> int -> item iter
+  val sort         : t -> item iter
+  val sort_by      : (item -> item -> int) -> t -> item iter
+  val sort_on      : (item -> 'b) -> t -> item iter
+  val starts_with  : t -> t -> bool
+  val split_at     : int -> t -> item iter * item iter
+  val split_while  : (item -> bool) -> t -> item iter * item iter
+  val sum          : t -> int
+  val tail         : t -> item iter
+  val take         : int -> t -> item iter
+  val take_every   : int -> t -> item iter
+  val take_while   : (item -> bool) -> t -> item iter
+  val take_last    : int -> t -> item iter
+  val to_list      : t -> item list
+  val uniq         : t -> item iter
+  val uniq_by      : (item -> item -> bool) -> t -> item iter
+  val zip          : t -> t -> (item * item) iter
+  val zip_with     : (item -> item -> 'a) -> t -> t -> 'a iter
+end
 
-  module type Sig0 = sig
+
+module Input'0 : sig
+  module type Base = sig
     type t
     type item
+
     val iter : t -> item iter
   end
 
-  module type Ext0 = sig
-    type t
-    type item
-
-    val all          : (item -> bool) -> t -> bool
-    val any          : (item -> bool) -> t -> bool
-    val chain        : t list -> item iter
-    val chunks       : int -> t -> item iter iter
-    val compare      : (item -> item -> int) -> t -> t -> int
-    val contains     : item -> t -> bool
-    val cycle        : t -> item iter
-    val dedup        : ?by: (item -> item -> bool) -> t -> item iter
-    val drop         : int -> t -> item iter
-    val drop_while   : (item -> bool) -> t -> item iter
-    val each         : (item -> unit) -> t -> unit
-    val ends_with    : t -> t -> bool
-    val enumerate    : ?from: int -> t -> (int * item) iter
-    val equal        : (item -> item -> bool) -> t -> t -> bool
-    val filter       : (item -> bool) -> t -> item iter
-    val filter_map   : (item -> 'b option) -> t -> 'b iter
-    val find         : (item -> bool) -> t -> item option
-    val find_index   : (item -> bool) -> t ->  int option
-    val find_indices : (item -> bool) -> t -> int iter
-    val fold         : ('r -> item -> 'r) -> 'r -> t -> 'r
-    val fold_while   : ('r -> item -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> t -> 'r
-    val fold_right   : (item -> 'r -> 'r) -> t -> 'r -> 'r
-    val group        : t -> item list iter
-    val group_by     : (item -> item -> bool) -> t -> item list iter
-    val group_on     : (item -> 'b) -> t -> item list iter
-    val head         : t -> item option
-    val index        : item -> t -> int option
-    val indices      : item -> t -> int iter
-    val intersparse  : t -> item -> item iter
-    val is_empty     : t -> bool
-    val join         : string -> t -> string
-    val merge        : (item -> item -> 'a option) -> t -> t -> 'a iter
-    val last         : t -> item option
-    val len          : t -> int
-    val map          : (item -> 'b) -> t -> 'b iter
-    val max          : ?by:(item -> item -> int) -> t -> item option
-    val min          : ?by:(item -> item -> int) -> t -> item option
-    val nth          : int -> t -> item option
-    val pairwise     : t -> (item * item) iter
-    val partition    : (item -> bool) -> t -> item iter * item iter
-    val powerset     : t -> item iter iter
-    val product      : t -> int
-    val reduce       : (item -> item -> item) -> t -> item option
-    val reject       : (item -> bool) -> t -> item iter
-    val reverse      : t -> item iter
-    val scan         : ('r -> item -> 'r) -> 'r -> t -> 'r iter
-    val scan_right   : ('r -> item -> 'r) -> 'r -> t -> 'r iter
-    val slice        : t -> int -> int -> item iter
-    val sort         : t -> item iter
-    val sort_by      : (item -> item -> int) -> t -> item iter
-    val sort_on      : (item -> 'b) -> t -> item iter
-    val starts_with  : t -> t -> bool
-    val split_at     : int -> t -> item iter * item iter
-    val split_while  : (item -> bool) -> t -> item iter * item iter
-    val sum          : t -> int
-    val tail         : t -> item iter
-    val take         : int -> t -> item iter
-    val take_every   : int -> t -> item iter
-    val take_while   : (item -> bool) -> t -> item iter
-    val take_last    : int -> t -> item iter
-    val to_list      : t -> item list
-    val uniq         : t -> item iter
-    val uniq_by      : (item -> item -> bool) -> t -> item iter
-    val zip          : t -> t -> (item * item) iter
-    val zip_with     : (item -> item -> 'a) -> t -> t -> 'a iter
-  end
-
-  module Make0(M : Sig0) : (Ext0 with type t := M.t and type item := M.item)
+  module Make(M : Base) : (Input'0 with type t := M.t and type item := M.item)
+end
 
 
-  (* Polymorphic Iterables *)
+(* Polymorphic Input Iterables *)
 
-  module type Sig1 = sig
+module type Input'1 = sig
+  type 'a t
+
+  val all          : ('a -> bool) -> 'a t -> bool
+  val any          : ('a -> bool) -> 'a t -> bool
+  val concat       : 'a t -> 'a t -> 'a iter
+  val chain        : 'a t list -> 'a iter
+  val chunks       : int -> 'a t -> 'a iter iter
+  val compare      : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+  val compress     : 'a t -> bool t -> 'a iter
+  val contains     : 'a -> 'a t -> bool
+  val cycle        : 'a t -> 'a iter
+  val dedup        : ?by: ('a -> 'a -> bool) -> 'a t -> 'a iter
+  val drop         : int -> 'a t -> 'a iter
+  val drop_while   : ('a -> bool) -> 'a t -> 'a iter
+  val each         : ('a -> unit) -> 'a t -> unit
+  val ends_with    : 'a t -> 'a t -> bool
+  val enumerate    : ?from: int -> 'a t -> (int * 'a) iter
+  val equal        : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+  val filter       : ('a -> bool) -> 'a t -> 'a iter
+  val filter_map   : ('a -> 'b option) -> 'a t -> 'b iter
+  val find         : ('a -> bool) -> 'a t -> 'a option
+  val find_index   : ('a -> bool) -> 'a t ->  int option
+  val find_indices : ('a -> bool) -> 'a t -> int iter
+  val flat_map     : ('a -> 'b t) -> 'a t -> 'b iter
+  val flatten      : 'a t t -> 'a iter
+  val fold         : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
+  val fold_while   : ('r -> 'a -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> 'a t -> 'r
+  val fold_right   : ('a -> 'r -> 'r) -> 'a t -> 'r -> 'r
+  val group        : 'a t -> 'a list iter
+  val group_by     : ('a -> 'a -> bool) -> 'a t -> 'a list iter
+  val group_on     : ('a -> 'b) -> 'a t -> 'a list iter
+  val head         : 'a t -> 'a option
+  val index        : 'a -> 'a t -> int option
+  val indices      : 'a -> 'a t -> int iter
+  val intersparse  : 'a t -> 'a -> 'a iter
+  val is_empty     : 'a t -> bool
+  val join         : string -> string t -> string
+  val merge        : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c iter
+  val last         : 'a t -> 'a option
+  val len          : 'a t -> int
+  val map          : ('a -> 'b) -> 'a t -> 'b iter
+  val max          : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+  val min          : ?by:('a -> 'a -> int) -> 'a t -> 'a option
+  val nth          : int -> 'a t -> 'a option
+  val pairwise     : 'a t -> ('a * 'a) iter
+  val partition    : ('a -> bool) -> 'a t -> 'a iter * 'a iter
+  val powerset     : 'a t -> 'a iter iter
+  val product      : int t -> int
+  val reduce       : ('a -> 'a -> 'a) -> 'a t -> 'a option
+  val reject       : ('a -> bool) -> 'a t -> 'a iter
+  val reverse      : 'a t -> 'a iter
+  val scan         : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r iter
+  val scan_right   : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r iter
+  val slice        : 'a t -> int -> int -> 'a iter
+  val sort         : 'a t -> 'a iter
+  val sort_by      : ('a -> 'a -> int) -> 'a t -> 'a iter
+  val sort_on      : ('a -> 'b) -> 'a t -> 'a iter
+  val starts_with  : 'a t -> 'a t -> bool
+  val split_at     : int -> 'a t -> 'a iter * 'a iter
+  val split_while  : ('a -> bool) -> 'a t -> 'a iter * 'a iter
+  val sum          : int t -> int
+  val tail         : 'a t -> 'a iter
+  val take         : int -> 'a t -> 'a iter
+  val take_every   : int -> 'a t -> 'a iter
+  val take_while   : ('a -> bool) -> 'a t -> 'a iter
+  val take_last    : int -> 'a t -> 'a iter
+  val to_list      : 'a t -> 'a list
+  val unzip        : ('a * 'b) t -> 'a iter * 'b iter
+  val uniq         : 'a t -> 'a iter
+  val uniq_by      : ('a -> 'a -> bool) -> 'a t -> 'a iter
+  val zip          : 'a t -> 'b t -> ('a * 'b) iter
+  val zip_with     : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c iter
+end
+
+
+module Input'1 : sig
+  module type Base = sig
     type 'a t
+
     val iter : 'a t -> 'a iter
   end
 
-  module type Ext1 = sig
-    type 'a t
-
-    val all          : ('a -> bool) -> 'a t -> bool
-    val any          : ('a -> bool) -> 'a t -> bool
-    val concat       : 'a t -> 'a t -> 'a iter
-    val chain        : 'a t list -> 'a iter
-    val chunks       : int -> 'a t -> 'a iter iter
-    val compare      : ('a -> 'a -> int) -> 'a t -> 'a t -> int
-    val compress     : 'a t -> bool t -> 'a iter
-    val contains     : 'a -> 'a t -> bool
-    val cycle        : 'a t -> 'a iter
-    val dedup        : ?by: ('a -> 'a -> bool) -> 'a t -> 'a iter
-    val drop         : int -> 'a t -> 'a iter
-    val drop_while   : ('a -> bool) -> 'a t -> 'a iter
-    val each         : ('a -> unit) -> 'a t -> unit
-    val ends_with    : 'a t -> 'a t -> bool
-    val enumerate    : ?from: int -> 'a t -> (int * 'a) iter
-    val equal        : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
-    val filter       : ('a -> bool) -> 'a t -> 'a iter
-    val filter_map   : ('a -> 'b option) -> 'a t -> 'b iter
-    val find         : ('a -> bool) -> 'a t -> 'a option
-    val find_index   : ('a -> bool) -> 'a t ->  int option
-    val find_indices : ('a -> bool) -> 'a t -> int iter
-    val flat_map     : ('a -> 'b t) -> 'a t -> 'b iter
-    val flatten      : 'a t t -> 'a iter
-    val fold         : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
-    val fold_while   : ('r -> 'a -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> 'a t -> 'r
-    val fold_right   : ('a -> 'r -> 'r) -> 'a t -> 'r -> 'r
-    val group        : 'a t -> 'a list iter
-    val group_by     : ('a -> 'a -> bool) -> 'a t -> 'a list iter
-    val group_on     : ('a -> 'b) -> 'a t -> 'a list iter
-    val head         : 'a t -> 'a option
-    val index        : 'a -> 'a t -> int option
-    val indices      : 'a -> 'a t -> int iter
-    val intersparse  : 'a t -> 'a -> 'a iter
-    val is_empty     : 'a t -> bool
-    val join         : string -> string t -> string
-    val merge        : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c iter
-    val last         : 'a t -> 'a option
-    val len          : 'a t -> int
-    val map          : ('a -> 'b) -> 'a t -> 'b iter
-    val max          : ?by:('a -> 'a -> int) -> 'a t -> 'a option
-    val min          : ?by:('a -> 'a -> int) -> 'a t -> 'a option
-    val nth          : int -> 'a t -> 'a option
-    val pairwise     : 'a t -> ('a * 'a) iter
-    val partition    : ('a -> bool) -> 'a t -> 'a iter * 'a iter
-    val powerset     : 'a t -> 'a iter iter
-    val product      : int t -> int
-    val reduce       : ('a -> 'a -> 'a) -> 'a t -> 'a option
-    val reject       : ('a -> bool) -> 'a t -> 'a iter
-    val reverse      : 'a t -> 'a iter
-    val scan         : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r iter
-    val scan_right   : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r iter
-    val slice        : 'a t -> int -> int -> 'a iter
-    val sort         : 'a t -> 'a iter
-    val sort_by      : ('a -> 'a -> int) -> 'a t -> 'a iter
-    val sort_on      : ('a -> 'b) -> 'a t -> 'a iter
-    val starts_with  : 'a t -> 'a t -> bool
-    val split_at     : int -> 'a t -> 'a iter * 'a iter
-    val split_while  : ('a -> bool) -> 'a t -> 'a iter * 'a iter
-    val sum          : int t -> int
-    val tail         : 'a t -> 'a iter
-    val take         : int -> 'a t -> 'a iter
-    val take_every   : int -> 'a t -> 'a iter
-    val take_while   : ('a -> bool) -> 'a t -> 'a iter
-    val take_last    : int -> 'a t -> 'a iter
-    val to_list      : 'a t -> 'a list
-    val unzip        : ('a * 'b) t -> 'a iter * 'b iter
-    val uniq         : 'a t -> 'a iter
-    val uniq_by      : ('a -> 'a -> bool) -> 'a t -> 'a iter
-    val zip          : 'a t -> 'b t -> ('a * 'b) iter
-    val zip_with     : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c iter
-  end
-
-  module Make1(M : Sig1) : (Ext1 with type 'a t := 'a M.t)
-
-
-  (* Default Polymorphic Iterables *)
-
-  module type Sig = Sig1
-  module type Ext = Ext1
-
-  module Make = Make1
+  module Make(M : Base) : (Input'1 with type 'a t := 'a M.t)
 end
+
+
+(* Default input iterable interface *)
+module type Input = Input'1
+
+(* Default input iterable *)
+module Input = Input'1
 
 
 (* Index Iterable *)
 
-module Index : sig
-  module type Sig1 = sig
+module type Index'1 = sig
+  type 'a t
+
+  include Input'1 with type 'a t := 'a t
+
+  val len   : 'a t -> int
+  val get   : 'a t -> int -> 'a option
+  val last  : 'a t -> 'a option
+  val slice : 'a t -> int -> int -> 'a iter
+  val each  : ('a -> unit) -> 'a t -> unit
+end
+
+
+module Index'1 : sig
+  module type Base = sig
     type 'a t
 
     val len : 'a t -> int
     val idx : 'a t -> int -> 'a
   end
 
-  module type Ext1 = sig
-    type 'a t
-
-    include Input.Sig1 with type 'a t := 'a t
-    include Input.Ext1 with type 'a t := 'a t
-
-    val len   : 'a t -> int
-    val get   : 'a t -> int -> 'a option
-    val last  : 'a t -> 'a option
-    val slice : 'a t -> int -> int -> 'a iter
-    val each  : ('a -> unit) -> 'a t -> unit
-  end
-
-  module Make1(M : Sig1) : (Ext1 with type 'a t := 'a M.t)
-
-
-  (* Default Polymorphic Iterables *)
-
-  module type Sig = Sig1
-  module type Ext = Ext1
-
-  module Make = Make1
+  module Make(M : Base) : (Index'1 with type 'a t := 'a M.t)
 end
 
+module type Index = Index'1
+module Index = Index'1
 
