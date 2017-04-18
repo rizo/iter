@@ -266,8 +266,9 @@ val split_while : ('a -> bool) -> 'a t -> 'a t * 'a t
 val sum : int t -> int
 (** [product iter] sums all the elements form [iter]. *)
 
-val tail : 'a t -> 'a t
-(** [tail iter] is the tail of [iter], i.e., all elements except the first one. *)
+val tail : 'a t -> 'a t option
+(** [tail iter] is the tail of [iter], i.e., all elements except the first one,
+    or [None] if empty. *)
 
 val take : int -> 'a t -> 'a t
 (** [take n iter] takes exactly [n] leftmost elements from iter producing a new
@@ -371,7 +372,7 @@ module type Input'0 = sig
   val split_at     : int -> t -> item iter * item iter
   val split_while  : (item -> bool) -> t -> item iter * item iter
   val sum          : t -> int
-  val tail         : t -> item iter
+  val tail         : t -> item iter option
   val take         : int -> t -> item iter
   val take_every   : int -> t -> item iter
   val take_while   : (item -> bool) -> t -> item iter
@@ -379,7 +380,6 @@ module type Input'0 = sig
   val to_list      : t -> item list
   val uniq         : t -> item iter
   val uniq_by      : (item -> item -> bool) -> t -> item iter
-  val view         : t -> (item * item iter) option
   val zip          : t -> t -> (item * item) iter
   val zip_with     : (item -> item -> 'a) -> t -> t -> 'a iter
 end
@@ -390,7 +390,7 @@ module Input'0 : sig
     type t
     type item
 
-    val iter : t -> item iter
+    val next : t -> (item * t) option
   end
 
   module Make(M : Base) : (Input'0 with type t := M.t and type item := M.item)
@@ -461,7 +461,7 @@ module type Input'1 = sig
   val split_at     : int -> 'a t -> 'a iter * 'a iter
   val split_while  : ('a -> bool) -> 'a t -> 'a iter * 'a iter
   val sum          : int t -> int
-  val tail         : 'a t -> 'a iter
+  val tail         : 'a t -> 'a iter option
   val take         : int -> 'a t -> 'a iter
   val take_every   : int -> 'a t -> 'a iter
   val take_while   : ('a -> bool) -> 'a t -> 'a iter
@@ -470,7 +470,6 @@ module type Input'1 = sig
   val unzip        : ('a * 'b) t -> 'a iter * 'b iter
   val uniq         : 'a t -> 'a iter
   val uniq_by      : ('a -> 'a -> bool) -> 'a t -> 'a iter
-  val view         : 'a t -> ('a * 'a iter) option
   val zip          : 'a t -> 'b t -> ('a * 'b) iter
   val zip_with     : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c iter
 end
@@ -480,7 +479,7 @@ module Input'1 : sig
   module type Base = sig
     type 'a t
 
-    val iter : 'a t -> 'a iter
+    val next : 'a t -> ('a * 'a t) option
   end
 
   module Make(M : Base) : (Input'1 with type 'a t := 'a M.t)

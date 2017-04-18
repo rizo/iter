@@ -360,16 +360,9 @@ let sum iter =
   fold (+) 0 iter
 
 let tail (Iter (s0, next)) =
-  let next' (s, did_skip_head) =
-    match next s with
-    | Some (a, s1) when did_skip_head -> Some (a, (s1, did_skip_head))
-    | Some (_, s1) ->
-      begin match next s1 with
-        | Some (a, s2) -> Some (a, (s2, true))
-        | None -> None
-      end
-    | None -> None in
-  Iter ((s0, false), next')
+  match next s0 with
+  | Some (_, s1) -> Some (Iter (s1, next))
+  | None -> None
 
 let take n (Iter (s0, next)) =
   let next' (s, i) =
@@ -469,7 +462,7 @@ module type Input'0 = sig
   val split_at     : int -> t -> item iter * item iter
   val split_while  : (item -> bool) -> t -> item iter * item iter
   val sum          : t -> int
-  val tail         : t -> item iter
+  val tail         : t -> item iter option
   val take         : int -> t -> item iter
   val take_every   : int -> t -> item iter
   val take_while   : (item -> bool) -> t -> item iter
@@ -477,7 +470,6 @@ module type Input'0 = sig
   val to_list      : t -> item list
   val uniq         : t -> item iter
   val uniq_by      : (item -> item -> bool) -> t -> item iter
-  val view         : t -> (item * item iter) option
   val zip          : t -> t -> (item * item) iter
   val zip_with     : (item -> item -> 'a) -> t -> t -> 'a iter
 end
@@ -488,79 +480,81 @@ module Input'0 = struct
     type t
     type item
 
-    val iter : t -> item iter
+    val next : t -> (item * t) option
   end
 
   module Make(M : Base) : (Input'0 with type    t := M.t
                                     and type item := M.item) = struct
-    let all p iterable                  = all p (M.iter iterable)
-    let any p iterable                  = any p (M.iter iterable)
-    let concat iterable1 iterable2      = concat (M.iter iterable1) (M.iter iterable2)
-    let chain iterables                 = chain (List.map M.iter iterables)
-    let chunks size iterable            = chunks size (M.iter iterable)
-    let compare cmp iterable1 iterable2 = compare cmp (M.iter iterable1) (M.iter iterable2)
-    let map f iterable                  = map f (M.iter iterable)
-    let contains x iterable             = contains x (M.iter iterable)
-    let cycle iterable                  = cycle (M.iter iterable)
-    let dedup ?by iterable              = dedup ?by (M.iter iterable)
-    let drop n iterable                 = drop n (M.iter iterable)
-    let drop_while p iterable           = drop_while p (M.iter iterable)
-    let each f iterable                 = each f (M.iter iterable)
-    let ends_with end_iterable iterable = ends_with (M.iter end_iterable) (M.iter iterable)
-    let enumerate ?from iterable        = enumerate ?from (M.iter iterable)
-    let equal eq iterable1 iterable2    = equal eq (M.iter iterable1) (M.iter iterable2)
-    let filter p iterable               = filter p (M.iter iterable)
-    let filter_map p iterable           = filter_map p (M.iter iterable)
-    let find p iterable                 = find p (M.iter iterable)
-    let find_index p iterable           = find_index p (M.iter iterable)
-    let find_indices p iterable         = find_indices p (M.iter iterable)
+    let iter iterable =
+      Iter (iterable, M.next)
+
+    let all p iterable                  = all p (iter iterable)
+    let any p iterable                  = any p (iter iterable)
+    let concat iterable1 iterable2      = concat (iter iterable1) (iter iterable2)
+    let chain iterables                 = chain (List.map iter iterables)
+    let chunks size iterable            = chunks size (iter iterable)
+    let compare cmp iterable1 iterable2 = compare cmp (iter iterable1) (iter iterable2)
+    let map f iterable                  = map f (iter iterable)
+    let contains x iterable             = contains x (iter iterable)
+    let cycle iterable                  = cycle (iter iterable)
+    let dedup ?by iterable              = dedup ?by (iter iterable)
+    let drop n iterable                 = drop n (iter iterable)
+    let drop_while p iterable           = drop_while p (iter iterable)
+    let each f iterable                 = each f (iter iterable)
+    let ends_with end_iterable iterable = ends_with (iter end_iterable) (iter iterable)
+    let enumerate ?from iterable        = enumerate ?from (iter iterable)
+    let equal eq iterable1 iterable2    = equal eq (iter iterable1) (iter iterable2)
+    let filter p iterable               = filter p (iter iterable)
+    let filter_map p iterable           = filter_map p (iter iterable)
+    let find p iterable                 = find p (iter iterable)
+    let find_index p iterable           = find_index p (iter iterable)
+    let find_indices p iterable         = find_indices p (iter iterable)
     let flat_map f iterable             = failwith "todo"
-    let fold f z iterable               = fold f z (M.iter iterable)
-    let fold_while f z iterable         = fold_while f z (M.iter iterable)
-    let fold_right f iterable z         = fold_right f (M.iter iterable) z
-    let group iterable                  = group (M.iter iterable)
-    let group_by f iterable             = group_by f (M.iter iterable)
-    let group_on f iterable             = group_on f (M.iter iterable)
-    let head iterable                   = head (M.iter iterable)
-    let index x iterable                = index x (M.iter iterable)
-    let indices x iterable              = indices x (M.iter iterable)
-    let intersparse iterable x          = intersparse (M.iter iterable) x
-    let is_empty iterable               = is_empty (M.iter iterable)
+    let fold f z iterable               = fold f z (iter iterable)
+    let fold_while f z iterable         = fold_while f z (iter iterable)
+    let fold_right f iterable z         = fold_right f (iter iterable) z
+    let group iterable                  = group (iter iterable)
+    let group_by f iterable             = group_by f (iter iterable)
+    let group_on f iterable             = group_on f (iter iterable)
+    let head iterable                   = head (iter iterable)
+    let index x iterable                = index x (iter iterable)
+    let indices x iterable              = indices x (iter iterable)
+    let intersparse iterable x          = intersparse (iter iterable) x
+    let is_empty iterable               = is_empty (iter iterable)
     let join sep iterable               = failwith "todo"
-    let merge f iterable1 iterable2     = merge f (M.iter iterable1) (M.iter iterable2)
-    let last iterable                   = last (M.iter iterable)
-    let len iterable                    = len (M.iter iterable)
-    let max ?by iterable                = max ?by (M.iter iterable)
-    let min ?by iterable                = min ?by (M.iter iterable)
-    let nth n iterable                  = nth n (M.iter iterable)
-    let pairwise iterable               = pairwise (M.iter iterable)
-    let partition p iterable            = partition p (M.iter iterable)
-    let powerset iterable               = powerset (M.iter iterable)
+    let merge f iterable1 iterable2     = merge f (iter iterable1) (iter iterable2)
+    let last iterable                   = last (iter iterable)
+    let len iterable                    = len (iter iterable)
+    let max ?by iterable                = max ?by (iter iterable)
+    let min ?by iterable                = min ?by (iter iterable)
+    let nth n iterable                  = nth n (iter iterable)
+    let pairwise iterable               = pairwise (iter iterable)
+    let partition p iterable            = partition p (iter iterable)
+    let powerset iterable               = powerset (iter iterable)
     let product iterable                = failwith "todo"
-    let reduce f iterable               = reduce f (M.iter iterable)
-    let reject p iterable               = reject p (M.iter iterable)
-    let reverse iterable                = reverse (M.iter iterable)
-    let scan f z iterable               = scan f z (M.iter iterable)
-    let scan_right f z iterable         = scan_right f z (M.iter iterable)
-    let slice iterable n m              = slice (M.iter iterable) n m
-    let sort iterable                   = sort (M.iter iterable)
-    let sort_by f iterable              = sort_by f (M.iter iterable)
-    let sort_on f iterable              = sort_on f (M.iter iterable)
-    let starts_with start iterable      = starts_with (M.iter start) (M.iter iterable)
-    let split_at i iterable             = split_at i (M.iter iterable)
-    let split_while p iterable          = split_while p (M.iter iterable)
+    let reduce f iterable               = reduce f (iter iterable)
+    let reject p iterable               = reject p (iter iterable)
+    let reverse iterable                = reverse (iter iterable)
+    let scan f z iterable               = scan f z (iter iterable)
+    let scan_right f z iterable         = scan_right f z (iter iterable)
+    let slice iterable n m              = slice (iter iterable) n m
+    let sort iterable                   = sort (iter iterable)
+    let sort_by f iterable              = sort_by f (iter iterable)
+    let sort_on f iterable              = sort_on f (iter iterable)
+    let starts_with start iterable      = starts_with (iter start) (iter iterable)
+    let split_at i iterable             = split_at i (iter iterable)
+    let split_while p iterable          = split_while p (iter iterable)
     let sum iterable                    = failwith "todo"
-    let tail iterable                   = tail (M.iter iterable)
-    let take n iterable                 = take n (M.iter iterable)
-    let take_every n iterable           = take_every n (M.iter iterable)
-    let take_while p iterable           = take_while p (M.iter iterable)
-    let take_last n iterable            = take_last n (M.iter iterable)
-    let to_list iterable                = to_list (M.iter iterable)
-    let uniq iterable                   = uniq (M.iter iterable)
-    let uniq_by f iterable              = uniq_by f (M.iter iterable)
-    let view iterable                   = view (M.iter iterable)
-    let zip iterable1 iterable2         = zip (M.iter iterable1) (M.iter iterable2)
-    let zip_with f iterable1 iterable2  = zip_with f (M.iter iterable1) (M.iter iterable2)
+    let tail iterable                   = tail (iter iterable)
+    let take n iterable                 = take n (iter iterable)
+    let take_every n iterable           = take_every n (iter iterable)
+    let take_while p iterable           = take_while p (iter iterable)
+    let take_last n iterable            = take_last n (iter iterable)
+    let to_list iterable                = to_list (iter iterable)
+    let uniq iterable                   = uniq (iter iterable)
+    let uniq_by f iterable              = uniq_by f (iter iterable)
+    let zip iterable1 iterable2         = zip (iter iterable1) (iter iterable2)
+    let zip_with f iterable1 iterable2  = zip_with f (iter iterable1) (iter iterable2)
   end
 
 end
@@ -629,7 +623,7 @@ module type Input'1 = sig
   val split_at     : int -> 'a t -> 'a iter * 'a iter
   val split_while  : ('a -> bool) -> 'a t -> 'a iter * 'a iter
   val sum          : int t -> int
-  val tail         : 'a t -> 'a iter
+  val tail         : 'a t -> 'a iter option
   val take         : int -> 'a t -> 'a iter
   val take_every   : int -> 'a t -> 'a iter
   val take_while   : ('a -> bool) -> 'a t -> 'a iter
@@ -638,19 +632,25 @@ module type Input'1 = sig
   val unzip        : ('a * 'b) t -> 'a iter * 'b iter
   val uniq         : 'a t -> 'a iter
   val uniq_by      : ('a -> 'a -> bool) -> 'a t -> 'a iter
-  val view         : 'a t -> ('a * 'a iter) option
   val zip          : 'a t -> 'b t -> ('a * 'b) iter
   val zip_with     : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c iter
 end
+
 
 module Input'1 = struct
   module type Base = sig
     type 'a t
 
+    val next : 'a t -> ('a * 'a t) option
+  end
+
+  module type Base_with_iter = sig
+    type 'a t
+
     val iter : 'a t -> 'a iter
   end
 
-  module Make(M : Base) : (Input'1 with type 'a t := 'a M.t) = struct
+  module Make_with_iter(M : Base_with_iter) : (Input'1 with type 'a t := 'a M.t) = struct
     let all p iterable                  = all p (M.iter iterable)
     let any p iterable                  = any p (M.iter iterable)
     let concat iterable1 iterable2      = concat (M.iter iterable1) (M.iter iterable2)
@@ -723,6 +723,13 @@ module Input'1 = struct
     let zip iterable1 iterable2         = zip (M.iter iterable1) (M.iter iterable2)
     let zip_with f iterable1 iterable2  = zip_with f (M.iter iterable1) (M.iter iterable2)
   end
+
+  module Make(M : Base) : (Input'1 with type 'a t := 'a M.t) = struct
+    include Make_with_iter(struct
+        type 'a t = 'a M.t
+        let iter iterable = Iter (iterable, M.next)
+      end)
+  end
 end
 
 
@@ -763,7 +770,7 @@ module Index'1 = struct
         else Some (M.idx indexable i, i + 1) in
       Iter (0, next)
 
-    include Input.Make(struct
+    include Input.Make_with_iter(struct
         type 'a t = 'a M.t
         let iter = iter
       end)
