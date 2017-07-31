@@ -386,13 +386,28 @@ let to_list self =
 
 let collect = to_list
 
-let of_list l =
+let list l =
   let next = function
     | []    -> None
     | x::xs -> Some (x, xs) in
   Iter (l, next)
 
-let iter = of_list
+let string str =
+  let next i =
+    try
+      Some (String.get str i, (i + 1))
+    with Invalid_argument _ ->
+      None in
+  Iter (0, next)
+
+let array arr =
+  let next i =
+    try
+      Some (Array.get arr i, (i + 1))
+    with Invalid_argument _ ->
+      None in
+  Iter (0, next)
+
 
 let unzip iter            = failwith "todo"
 let uniq iter             = failwith "todo"

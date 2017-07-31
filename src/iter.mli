@@ -288,11 +288,14 @@ val to_list : 'a t -> 'a list
 val collect : 'a t -> 'a list
 (** [collect iter] collects all the elements form [iter] into a list. *)
 
-val of_list : 'a list -> 'a t
-(** [iter list] creates an iterator with the elements from [list]. *)
+val list : 'a list -> 'a t
+(** [list l] creates an iterator with the elements from the list [l]. *)
 
-val iter : 'a list -> 'a t
-(** [iter list] creates an iterator with the elements from [list]. *)
+val string : 'a list -> 'a t
+(** [string s] creates an iterator with the elements from the string [s]. *)
+
+val array : 'a list -> 'a t
+(** [array a] creates an iterator with the elements from the array [a]. *)
 
 val unzip : ('a * 'b) t -> ('a t * 'b t)
 
