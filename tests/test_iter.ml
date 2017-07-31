@@ -6,7 +6,7 @@ open Iter
 
 let test_append () =
   let i1 = append empty 'x' in
-  let i2 = append (iter ['a'; 'b'; 'c']) 'x' in
+  let i2 = append (list ['a'; 'b'; 'c']) 'x' in
 
   assert (collect i1 = ['x']);
   assert (collect i2 = ['a'; 'b'; 'c'; 'x'])
@@ -14,7 +14,7 @@ let test_append () =
 
 let test_prepend () =
   let i1 = prepend empty 'x' in
-  let i2 = prepend (iter ['a'; 'b'; 'c']) 'x' in
+  let i2 = prepend (list ['a'; 'b'; 'c']) 'x' in
 
   assert (collect i1 = ['x']);
   assert (collect i2 = ['x'; 'a'; 'b'; 'c'])
@@ -48,7 +48,7 @@ let test_range () =
 
 let test_contains () =
   let i1 = iota 10 in
-  let i2 = iter ['a'; 'b'; 'c'] in
+  let i2 = list ['a'; 'b'; 'c'] in
 
   assert (contains 4   i1 = true);
   assert (contains 'x' i2 = false)
