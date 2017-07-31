@@ -291,10 +291,10 @@ val collect : 'a t -> 'a list
 val list : 'a list -> 'a t
 (** [list l] creates an iterator with the elements from the list [l]. *)
 
-val string : 'a list -> 'a t
+val string : string -> char t
 (** [string s] creates an iterator with the elements from the string [s]. *)
 
-val array : 'a list -> 'a t
+val array : 'a array -> 'a t
 (** [array a] creates an iterator with the elements from the array [a]. *)
 
 val unzip : ('a * 'b) t -> ('a t * 'b t)
