@@ -87,9 +87,18 @@ val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 (** [equal eq iter1 iter2] is [true] if every element in [iter1] is
     sequentially equal to elements in [iter2]. *)
 
+val select : ('a -> bool) -> 'a t -> 'a t
 val filter : ('a -> bool) -> 'a t -> 'a t
 (** [filter p iter] selects all elements from [iter] for which [p] is [true].
-    An exact opposite of {!val:reject}. *)
+    An exact opposite of {!val:reject}.
+
+    Example:
+
+    {[
+      Iter.string "hello world" |> select Char.is_whitespace |> collect
+    ]}
+
+    @see {!select}, {!reject} *)
 
 val filter_map : ('a -> 'b option) -> 'a t -> 'b t
 (** [filter_map f iter] selects all elements from [iter] that are [Some] after
@@ -183,6 +192,10 @@ val nth : int -> 'a t -> 'a option
 (** [nth n iter] gets the [n]th element from the [iter] or None if [n] exceeds
     the length of [iter]. *)
 
+val first : 'a t -> 'a option
+val second : 'a t -> 'a option
+val third : 'a t -> 'a option
+
 val pairwise : 'a t -> ('a * 'a) t
 
 val partition : ('a -> bool) -> 'a t -> 'a t * 'a t
@@ -222,7 +235,7 @@ val reduce : ('a -> 'a -> 'a) -> 'a t -> 'a option
 
 val reject : ('a -> bool) -> 'a t -> 'a t
 (** [reject p iter] rejects all elements from [iter] for which [p] is [false].
-    An exact opposite of {!val:filter}. *)
+    An exact opposite of {!val:select}. *)
 
 val repeat : 'a -> 'a t
 (** [repeat x] produces an iterator by repeating [x] ad infinitum. *)
