@@ -363,18 +363,6 @@ val combine : 'a t -> 'a t -> 'a t
     iterator [other] appended at the end. *)
 
 
-
-val chain : 'a t list -> 'a t
-(** [chain iter_list] concatenates the list of iterators [iter_list] producing
-    a new iterator. *)
-
-val merge : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c t
-
-
-
-
-
-
 (** {6 Sorting Elements} *)
 
 val sort : 'a t -> 'a t
@@ -561,6 +549,12 @@ val reduce : ('a -> 'a -> 'a) -> 'a t -> 'a option
 (** [reduce f iter] reduces [iter] to a single value using [f] to combine every
     element with the previous result, starting with the first element. Returns
     [None] is the iterator is empty. *)
+
+val chain : 'a t list -> 'a t
+(** [chain iter_list] concatenates the list of iterators [iter_list] producing
+    a new iterator. *)
+
+val merge : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c t
 
 val scan : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
 
