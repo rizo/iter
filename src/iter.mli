@@ -16,7 +16,7 @@ type 'a iter =
     next : 'r . ('a -> 'cursor -> 'r) -> 'r -> 'cursor -> 'r;
     stop : 'cursor -> unit;
   } -> 'a iter
-(** The type for iterators. *)
+(** Iterators of values of type ['a]. *)
 
 type 'a t = 'a iter
 (** A local alias for [iter] type. *)
@@ -51,6 +51,14 @@ val two : 'a -> 'a -> 'a t
 
 val three : 'a -> 'a -> 'a -> 'a t
 (** [three x1 x2 x3] is an iterator with three elements [x1], [x2] and [x3]. *)
+
+val zeros : int t
+(** [zeros] is equivalent to [repeat 0], {i i.e.} an infinite sequence of
+    zeros. *)
+
+val ones : int t
+(** [ones] is equivalent to [repeat 1], {i i.e.} an infinite sequence of
+    ones. *)
 
 val with_length : int -> (int -> 'a) -> 'a t
 (** [with_length n f] is an iterator of length [n] where each element at
@@ -189,6 +197,14 @@ val contains : 'a -> 'a t -> bool
       assert (contains 'x' ['a'; 'b'; 'd'] = false);
     ]} *)
 
+val count : 'a -> 'a t -> int
+(** [count x self] counts the number of occurrences of the element [x] in the
+    iterator [self]. *)
+
+val count_where : ('a -> bool) -> 'a t -> int
+(** [count_where predicate self] counts the number of elements from the
+    iterator [self] that match the [predicate] function. *)
+
 val all : ('a -> bool) -> 'a t -> bool
 (** [all predicate self] is [true] if all the elements from [self] match the
     predicate [predicate] function.
@@ -220,19 +236,18 @@ val find_max : ?by:('a -> 'a -> order) -> 'a t -> 'a option
 
 (** {6 Selecting Elements} *)
 
-val select : ('a -> bool) -> 'a t -> 'a t
 val filter : ('a -> bool) -> 'a t -> 'a t
 (** [filter predicate self] selects all elements from the iterator [self] for
     which [predicate] returns [true]. It is an exact opposite of {!reject}.
 
     @see {!reject} *)
 
-val select_indexed : ('a -> bool) -> 'a t -> 'a t
-(** [select_indexed f self] is like {!select} but adds the current index to
+val filter_indexed : (int -> 'a -> bool) -> 'a t -> 'a t
+(** [filter_indexed f self] is like {!filter} but adds the index to
     the application of [f] on every element. *)
 
-val select_indices : int t -> 'a t -> 'a t
-(** [select_indices indices self] selects the elements form the iterator
+val filter_indices : int t -> 'a t -> 'a t
+(** [filter_indices indices self] selects the elements form the iterator
     [self] whose indices are in the iterator [indices].
 
     @see {!reject_indices} *)
@@ -272,9 +287,9 @@ val slice : int -> int -> 'a t -> 'a t
 
 val reject : ('a -> bool) -> 'a t -> 'a t
 (** [reject predicate self] rejects all elements from the iterator [self] for
-    which [predicate] returns [false]. It is an exact opposite of {!select}.
+    which [predicate] returns [false]. It is an exact opposite of {!filter}.
 
-    @see {!select} *)
+    @see {!filter} *)
 
 val reject_indexed : ('a -> int -> bool) -> 'a t -> 'a t
 (** [reject_indexed f self] is like {!reject} but adds the current index to
@@ -284,7 +299,7 @@ val reject_indices : int t -> 'a t -> 'a t
 (** [reject_indices indices self] rejects the elements form the iterator
     [self] whose indices are in the iterator [indices].
 
-    @see {!select_indices} *)
+    @see {!filter_indexed} *)
 
 val remove : 'a -> 'a t -> 'a t
 (** [remove x self] is [reject ((=) x)], {i i.e.} the iterator [self] with all
@@ -332,14 +347,14 @@ val find_map : ('a -> 'b option) -> 'a t -> 'b option
     produces an optional [Some] value after applying [f], or [None] if there is
     no such element.
 
-    @see {!select_map} *)
+    @see {!filter_map} *)
 
-val select_map : ('a -> 'b option) -> 'a t -> 'b t
-(** [select_map f self] selects all elements from the iterator [self] that
+val filter_map : ('a -> 'b option) -> 'a t -> 'b t
+(** [filter_map f self] selects all elements from the iterator [self] that
     produce the optional [Some] value after applying [f], rejecting all
     elements that produce [None].
 
-    @see {!find_map}, {!select}, {!reject} *)
+    @see {!find_map}, {!filter}, {!reject} *)
 
 val flat_map : ('a -> 'b t) -> 'a t -> 'b t
 (** [flat_map f self] is an iterator that works like [map] but flattens nested
@@ -348,7 +363,7 @@ val flat_map : ('a -> 'b t) -> 'a t -> 'b t
     This function is equivalent to the Monadic [bind] operation. *)
 
 
-(** {6 Adding Elements} *)
+(** {6 Adding and Combining Elements} *)
 
 val append : 'a t -> 'a -> 'a t
 (** [append x self] appends the element [x] at the end of the iterator
@@ -358,9 +373,15 @@ val prepend : 'a t -> 'a -> 'a t
 (** [prepend x self] prepends the element [x] at the beginning of the iterator
     [self]. *)
 
-val combine : 'a t -> 'a t -> 'a t
-(** [combine self other] is the iterator [self] with all elements from the
+val concat : 'a t -> 'a t -> 'a t
+(** [concat self other] is the iterator [self] with all elements from the
     iterator [other] appended at the end. *)
+
+val chain : 'a t list -> 'a t
+(** [chain l] concatenates all iterators in the list [l] producing
+    a new iterator with all elements flattened. *)
+
+val merge : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c t
 
 
 (** {6 Sorting Elements} *)
@@ -396,11 +417,19 @@ val to_array : 'a array -> 'a t
 (** {6 Iterating Over Elements} *)
 
 val each : ('a -> unit) -> 'a t -> unit
-(** [each f iter] applies the effectful function [f] to each element from
-    [iter] discarding the results. *)
+(** [each f iter] applies the function [f] to each element from the iterator
+    [self] discarding the results. *)
 
 val indexed : ?from: int -> 'a t -> (int * 'a) t
-(** [indexed ?from:n self] adds an index to each element in [self]. *)
+(** [indexed ?from:n self] adds an index, starting with [n], to each element
+    in the iterator [self].
+
+    {[
+      let abc = Iter.of_string "abc"
+        |> Iter.indexed ~from:97
+        |> Iter.collect in
+      assert (abc = [(97, 'a'); (98, 'b'); (99, 'c')])
+    ]} *)
 
 val inspect : ('a -> unit) -> 'a t -> 'a t
 (** [inspect f self] is an iterator that does something with each element of
@@ -409,7 +438,7 @@ val inspect : ('a -> unit) -> 'a t -> 'a t
     {[
       let res =
         Iter.iota 5
-        |> Iter.select (fun x -> x mod 2 = 0)
+        |> Iter.filter (fun x -> x mod 2 = 0)
         |> Iter.inspect Int.print
         |> Iter.sum in
       assert (res = 6)
@@ -464,6 +493,39 @@ val chunks : int -> 'a t -> 'a t t
     a new iterator. Note: the last chunk may have less then [n] elements. *)
 
 
+(** {6 ?} *)
+
+val starts_with : 'a t -> ?by:('a -> 'a -> bool) -> 'a t -> bool
+(** [starts_with prefix ?by:equal self] is [true] if each element from [prefix]
+    matches the elements at the beginning of [self] by using [equal] to compare
+    the elements.
+
+    {[
+      (* Use polymorphic comparison function. *)
+      assert Iter.(string "abcdef" |> starts_with (string "abc"))
+
+      (* Use a custom equality function. *)
+      let equal_no_case a b =
+        Char.(lowercase_ascii a = lowercase_ascii b) in
+      let answer =
+        Iter.string "ABCDEF"
+        |> Iter.starts_with (string "abc") ~by:equal_no_case in
+      assert (answer = true)
+    ]} *)
+
+val is_empty : 'a t -> bool
+(** [is_empty self] is [true] if the iterator [self] does not have any
+    elements.
+
+    This function will initialize the iterator [self] and attempt to request
+    one element.
+
+    {[
+      assert Iter.(is_empty zero);
+      assert Iter.(not (is_empty (range 10)));
+    ]} *)
+
+
 (* Zipping and Unzipping Iterators *)
 
 val zip : 'a t -> 'b t -> ('a * 'b) t
@@ -473,71 +535,136 @@ val zip_with : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 val unzip : ('a * 'b) t -> ('a t * 'b t)
 
 
-(** {Other Operations} *)
+(** {6 Rearrange the Elements} *)
 
-val collect : 'a t -> 'a list
-(** [collect iter] collects all the elements form [iter] into a list. *)
-
+(* XXX: Should be only defined for indexed containers *)
 val reverse : 'a t -> 'a t
-(** [reverse iter] reverses the elements of [iter]. Only works on finite
-    iterables.
+(** [reverse self] reverses the order of the elements of the iterator [self].
+
+    {e WARNING:} Should only be used on finite iterators. Will block
+    indefinitely and consume unbounded amounts of memory on infinite iterators.
 
     {b Complexity:} {e O(n)} *)
 
-val intersparse : 'a -> 'a t -> 'a t
-(** [intersparse x iter] takes element [x] and iterator [iter] and `intersperses'
-    that element between the elements of the iterator. *)
-
-val cycle : 'a t -> 'a t
-(** [cycle iter] repeats cyclically [iter] ad infinitum. *)
-
-val starts_with : ?by:('a -> 'a -> bool) 'a t -> 'a t -> bool
-(** [starts_with prefix self] is [true] if each element from [prefix]
-    matches the elements at the beginning of [self]. *)
-
-val ends_with : 'a t -> 'a t -> bool
-(** [ends_with end_iter iter] is [true] if each element from [end_iter] matches
-    the elements at the end of [iter]. *)
-
 val flatten : 'a t t -> 'a t
-(** [flatten iters] concatenates all recursive iterators in [iters] *)
-
-val pairs : 'a t -> ('a * 'a) t
-(** [pairs self] is an iterator with the elements from the iterator [self]
-    chained pairwise as tuples.
-
-    @see {!map_pairs}
+(** [flatten self] concatenates all sub-iterators in the iterator [self].
 
     {[
-      let pairs =
-        Iter.iota 5
-        |> Iter.pairs
+      let items =
+        Iter.make [0; 1]
+        |> Iter.repeat
+        |> Iter.take 6
+        |> Iter.flatten
         |> Iter.collect in
-      assert (pairs = [(1, 2); (2, 3); (3, 4); (4, 5)])
+      assert (items = [0; 1; 0; 1; 0; 1])
+    ]} *)
+
+val cycle : 'a t -> 'a t
+(** [cycle self] repeats cyclically the elements of the iterator [self] {i ad
+    infinitum}.
+
+    {[
+      let items =
+        Iter.make [0; 1]
+        |> Iter.cycle
+        |> Iter.take 6
+        |> Iter.collect in
+      assert (items = [0; 1; 0; 1; 0; 1])
+    ]} *)
+
+val pairwise : 'a t -> ('a * 'a) t
+(** [pairwise self] is an iterator with the elements from the iterator [self]
+    chained pairwise as tuples
+
+    {[
+      let items =
+        Iter.iota 5
+        |> Iter.pairwise
+        |> Iter.collect in
+      assert (items = [(1, 2); (2, 3); (3, 4); (4, 5)])
     ]} *)
 
 val powerset : 'a t -> 'a t t
-(** [powerset self] is the powerset iterator for the elements of [self]. *)
+(** [powerset self] is an iterator of all sub-iterators of the iterator
+    [self].
 
-val fold : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r
-(** [fold f init iter] reduces [iter] to a single value using [f] to combine
-    every element with the previous result, starting with [init] and processing
-    the elements from left to right. *)
+    {[
+      let items =
+        Iter.make ['a'; 'b'; 'c']
+        |> Iter.powerset items
+        |> Iter.map Iter.collect
+        |> Iter.collect in
+      assert (items = [[]; ['a']; ['b']; ['c']; ['a'; 'b'];
+                       ['a'; 'c']; ['b'; 'c']; ['a'; 'b'; 'c']])
+    ]} *)
 
-val fold_while : ('r -> 'a -> [ `Continue of 'r | `Done of 'r ]) -> 'r -> 'a t -> 'r
-(** [fold_while f init iter] similar to [fold] but adds interruption control to
-    the combining function [f]. The processing continues until [f] returns
-    [`Done] or the iterator is empty. *)
+val intersparse : 'a -> 'a t -> 'a t
+(** [intersparse x self] is an iterator with the element [x]
+    {i interspersed} between the elements of the iterator [self].
+
+    {[
+      let items =
+        Iter.make ['a'; 'b'; 'c']
+        |> Iter.intersparse 'x'
+        |> Iter.collect in
+      assert (items = ['a'; 'x'; 'b'; 'x'; 'c'])
+    ]} *)
+
+
+
+(** {6 Iterator Folds} *)
+
+val fold : ('a -> 'r -> 'r) -> 'r -> 'a t -> 'r
+(** [fold f r self] reduces the iterator [self] to a single value of type ['r]
+    using [f] to combine each element with the previous result, starting with
+    [r] and processing the elements from left to right. *)
+
+val fold_while : ('a -> 'r -> ('r -> 'r) -> 'r) -> 'r -> 'a t -> 'r
+(** [fold_while f r self] similar to [fold] but passes explicit continuation
+    function to the reducing function [f]. The processing will stop when [f]
+    returns without calling the continuation function.
+
+    {[
+      (* Multiply numbers stopping when 0 is found. *)
+      let product =
+        Iter.make [32; 4; 5; 23; 0; 6]
+        |> fold_while (fun x r continue ->
+            if x = 0 then 0 else continue (x * r)) 1 in
+      assert (product = 0)
+    ]} *)
 
 val fold_right : ('a -> 'r -> 'r) -> 'a t -> 'r -> 'r
-(** [fold f init iter] similar to [fold] but starts processing the elements
-    from right to left. Note: this function is not tail recursive. *)
+(** [fold_right f r self] similar to [fold] but starts processing the
+    elements from right to left.
 
+    {e WARNING:} This function is not tail recursive. *)
 
-val is_empty : 'a t -> bool
-(** [is_empty iter] is [true] if the iterator has no elements. *)
+val collect : 'a t -> 'a list
+(** [collect self] collects all the elements form the iterator [self] into a
+    list. *)
+
+val reduce : ('a -> 'a -> 'a) -> 'a t -> 'a option
+(** [reduce f self] reduces the iterator [self] to a single value, of the same
+    type as the elements of [self], using [f] to combine each element with the
+    previous result, starting with the first element. Returns [None] is the
+    iterator is empty.
+
+    {[
+      assert (Iter.iota 6 |> Iter.reduce (+) = Some 15)
+    ]} *)
+
+val scan : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
+(** [scan f r self] is like [fold] but creates an iterator for intermediate
+    results produced by applications [f]. *)
+
+val scan_right : ('a -> 'r -> 'r) -> 'r -> 'a t -> 'r t
+(** [scan_right f r self] similar to [scan] but starts processing the
+    elements from right to left.
+
+    {e WARNING:} This function is not tail recursive. *)
 
 val length : 'a t -> int
+(** [length self] is the number of elements in the iterator [self]. *)
 
 val sum : int t -> int
 (** [product iter] sums all the elements form [iter]. *)
@@ -545,23 +672,13 @@ val sum : int t -> int
 val product : int t -> int
 (** [product iter] multiplies all the elements form [iter]. *)
 
-val reduce : ('a -> 'a -> 'a) -> 'a t -> 'a option
-(** [reduce f iter] reduces [iter] to a single value using [f] to combine every
-    element with the previous result, starting with the first element. Returns
-    [None] is the iterator is empty. *)
-
-val chain : 'a t list -> 'a t
-(** [chain iter_list] concatenates the list of iterators [iter_list] producing
-    a new iterator. *)
-
-val merge : ('a -> 'b -> 'c option) -> 'a t -> 'b t -> 'c t
-
-val scan : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
-
-val scan_right : ('r -> 'a -> 'r) -> 'r -> 'a t -> 'r t
-
 
 (* Instances *)
+
+module Monoid : Monoid
+module Comparable : Comparable1
+module Equatable : Equatable1
+
 
 val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 (** [equal eq iter1 iter2] is [true] if every element in [iter1] is
