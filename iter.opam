@@ -1,0 +1,22 @@
+opam-version: "1.2"
+maintainer: "Rizo Isrof <rizo@odis.io>"
+authors: ["Rizo Isrof <rizo@odis.io>"]
+homepage: "https://github.com/rizo/iter"
+doc: "http://rizo.odis.io/iter/doc"
+license: "ISC"
+dev-repo: "https://github.com/rizo/iter.git"
+bug-reports: "https://github.com/rizo/iter/issues"
+tags: []
+available: [ ocaml-version >= "4.01.0"]
+depends:
+[
+  "ocamlfind" {build}
+  "ocamlbuild" {build}
+  "topkg" {build & >= "0.9.0"}
+]
+depopts: []
+build:
+[[
+  "ocaml" "pkg/pkg.ml" "build"
+          "--dev-pkg" "%{dev}%"
+]]

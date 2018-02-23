@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(library
+ ((name Iter)
+  (public_name iter)
+  (wrapped false)
+  (libraries (ether))
+  (ocamlopt_flags (:standard -O3))
+  (modules (Iter))))
+
